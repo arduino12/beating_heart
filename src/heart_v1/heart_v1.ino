@@ -1,6 +1,6 @@
 /*
  * Detects a heart rate and activates the pulse motor and leds accordingly.
- * Arad Eizen 21/04/18.
+ * Arad Eizen 26/04/18.
  */
 #include <Wire.h>
 #include <FastLED.h>
