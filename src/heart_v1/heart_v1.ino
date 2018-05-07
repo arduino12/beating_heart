@@ -27,9 +27,9 @@
 /* max brightness for rgb channel */
 #define LED_BRIGHTNESS				(64)
 /* total amount of rgb leds */
-#define LED_COUNT					(4)
+#define LED_COUNT					(8)
 /* periodic debug print time */
-#define DEBUG_UPDATE_MS				(2000)
+#define DEBUG_UPDATE_MS				(4000)
 
 PulseOximeter pox;
 CRGBArray<LED_COUNT> leds;
@@ -38,10 +38,10 @@ uint32_t debug_last_update;
 
 struct {
 	uint8_t motor_state = 0;
-	uint8_t motor_pulses[4] = {50, 30, 100, 0};
+	uint8_t motor_pulses[4] = {150, 300, 150, 0};
 	uint32_t last_motor_update;
 	uint8_t led_state = 0;
-	uint8_t led_pulses[2] = {100, 0};
+	uint8_t led_pulses[6] = {80, 150, 70, 0};
 	uint32_t last_led_update;
 } beat_effect;
 
@@ -108,30 +108,31 @@ void loop()
 		debug_last_update = cur_ms + DEBUG_UPDATE_MS;
 		Serial.print(F("heart rate: ")); Serial.print(pox.getHeartRate()); Serial.println(" bpm");
 		Serial.print(F("oxidation (spO2): ")); Serial.print(pox.getSpO2()); Serial.println('%');
-		Serial.print(F("temp: ")); Serial.print(pox.getTemperature()); Serial.println('C');
+		// Serial.print(F("temp: ")); Serial.print(pox.getTemperature()); Serial.println('C');
 	}
 
 	if (beat_effect.motor_state) {
 		if (beat_effect.last_motor_update < cur_ms) {
-			if (++beat_effect.motor_state >= ARRAY_SIZE(beat_effect.motor_pulses)) {
+			if (beat_effect.motor_state++ >= ARRAY_SIZE(beat_effect.motor_pulses)) {
 				beat_effect.motor_state = 0;
 				set_pulse_motor(0);
 			}
 			else {
-				beat_effect.last_motor_update = cur_ms + beat_effect.motor_pulses[beat_effect.motor_state];
-				set_pulse_motor(!(beat_effect.motor_state & 1));
+				beat_effect.last_motor_update = cur_ms + beat_effect.motor_pulses[beat_effect.motor_state - 2];
+				set_pulse_motor(beat_effect.motor_state & 1);
 			}
 		}
 	}
 
 	if (beat_effect.led_state) {
 		if (beat_effect.last_led_update < cur_ms) {
-			if (++beat_effect.led_state >= ARRAY_SIZE(beat_effect.led_pulses)) {
+			if (beat_effect.led_state++ >= ARRAY_SIZE(beat_effect.led_pulses)) {
 				beat_effect.led_state = 0;
 				set_leds(CRGB::Black);
 			}
 			else {
-				beat_effect.last_led_update = cur_ms + beat_effect.led_pulses[beat_effect.led_state];
+				beat_effect.last_led_update = cur_ms + beat_effect.led_pulses[beat_effect.led_state - 2];
+				set_leds(beat_effect.led_state & 1 ? CRGB::Black : CRGB::Red);
 			}
 		}
 	}
